@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 func (h *Handler) serveHome(c *gin.Context) {
@@ -112,11 +111,6 @@ func (h *Handler) listenUser(client *model.Client) {
 func (h *Handler) GetHistory(c *gin.Context) {
 	req := &model.GetLocationRequest{
 		Timestamp: -1,
-	}
-	if err := c.ShouldBindWith(req, binding.JSON); err != nil {
-		log.Printf("invalid input, some fields are incorrect: %s", err.Error())
-		c.AbortWithStatusJSON(404, createResponse(nil, "INVALID_INPUT"))
-		return
 	}
 	keys := c.Request.URL.Query()["user_id"]
 	id, err := strconv.Atoi(keys[0])
