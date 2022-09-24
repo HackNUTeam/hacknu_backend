@@ -9,15 +9,14 @@ import (
 )
 
 type Handler struct {
-	services *service.Service
-	hub      *model.Hub
-	upgrader *websocket.Upgrader
-	pong     chan *model.PongStruct
-	ping     chan []byte
+	services   *service.Service
+	hub        *model.Hub
+	upgrader   *websocket.Upgrader
+	dispatcher *model.Client
 }
 
 func NewHandler(services *service.Service, hub *model.Hub, upgrader websocket.Upgrader) *Handler {
-	return &Handler{services: services, hub: hub, upgrader: &upgrader, ping: make(chan []byte, 256), pong: make(chan *model.PongStruct, 10)}
+	return &Handler{services: services, hub: hub, upgrader: &upgrader}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {

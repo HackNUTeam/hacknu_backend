@@ -77,22 +77,8 @@ func (h *Handler) SendLocation(c *gin.Context) {
 		return
 	}
 	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
-
+	h.dispatcher = client
 	//h.pong = make(chan *model.PongStruct, 10)
-	pong := &model.PongStruct{}
-	h.pong <- pong
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancel()
-	var messageByte []byte
-	select {
-	case <-ctx.Done():
-		log.Println("pong didn't received, no clinet")
-		return
-	case messageByte = <-h.ping:
-		log.Println("pong received: starting to proccess messages")
-	}
-
-	go h.WritePump(client, messageByte)
 }
 
 func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
@@ -112,16 +98,7 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 			}
 			break
 		}
-		h.ping <- message
-		select {
-		case <-ctx.Done():
-			log.Println("ebu ernara")
-			return
-		case <-h.pong:
-			log.Println("pong received: dispetcher alive")
-		}
-
-		c.Hub.Broadcast <- message
+		h.WritePump(h.dispatcher, message)
 	}
 }
 
