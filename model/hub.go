@@ -12,7 +12,7 @@ type Client struct {
 	Conn *websocket.Conn
 
 	// Buffered channel of outbound messages.
-	Send chan *LocationData
+	Send chan []byte
 }
 
 // readPump pumps messages from the websocket connection to the hub.

@@ -59,7 +59,7 @@ func (h *Handler) ServeWs(c *gin.Context) {
 		log.Println(err)
 		return
 	}
-	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan *model.LocationData, 256)}
+	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
 	log.Print(client)
 	client.Hub.Register <- client
 
@@ -88,7 +88,7 @@ func (h *Handler) SendLocation(c *gin.Context) {
 		log.Println(err)
 		return
 	}
-	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan *model.LocationData, 256)}
+	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
 
 	go h.WritePump(client, messageByte)
 	close(h.ping)
@@ -176,6 +176,7 @@ func (h *Handler) WritePump(c *model.Client, msg []byte) {
 		case <-ticker.C:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("BRUH %v", err)
 				return
 			}
 		}
