@@ -9,7 +9,7 @@ import (
 
 type User interface {
 	CreateReading(location *model.LocationData) error
-	GetHistoryLocation(user *model.GetLocationRequest) (*model.LocationData, error)
+	GetHistoryLocation(user *model.GetLocationRequest) ([]*model.LocationData, error)
 }
 
 type Repository struct {

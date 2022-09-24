@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
   id bigserial,
   name text NOT NULL ,
-  _created_at timestamp DEFAULT now() NOT NULL ,
+  _created_at bigint ,
   PRIMARY KEY(id)
 );
 CREATE TABLE IF NOT EXISTS positions (
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS positions (
   activity text ,
   h_accuracy float NOT NULL,
   v_accuracy float NOT NULL,
-  _created_at timestamp DEFAULT now() NOT NULL ,
+  _created_at bigint ,
    user_id bigint,
   PRIMARY KEY(id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

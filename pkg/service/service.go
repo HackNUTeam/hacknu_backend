@@ -7,7 +7,7 @@ import (
 
 type User interface {
 	CreateReading(location *model.LocationData) error
-	GetHistory(user *model.GetLocationRequest) (*model.LocationData, error)
+	GetHistory(user *model.GetLocationRequest) ([]*model.LocationData, error)
 }
 type Service struct {
 	User
