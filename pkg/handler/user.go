@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"hacknu/model"
 	"log"
@@ -114,22 +113,22 @@ func (h *Handler) listenUser(client *model.Client) {
 		}
 		log.Printf("Received message from client %v", msg)
 		if h.dispatcherChan != nil {
-			var location model.LocationData
+			/*var location model.LocationData
 			err := json.Unmarshal(msg, &location)
 			if err != nil {
-				log.Print(errors.New("could not unmarshall"))
+				log.Print(err)
 			}
 			if val, exists := h.clients[client]; !exists {
 				h.clients[client] = location
 			} else {
 				location.Activity = findActivity(val.Latitude, val.Longitude, location.Latitude, location.Longitude, location.Timestamp-val.Timestamp)
 			}
-			log.Print(location.Activity)
+			log.Print(location.Activity)*/
 			h.dispatcherChan <- msg
-			err = h.services.User.CreateReading(&location)
+			/*err = h.services.User.CreateReading(&location)
 			if err != nil {
 				log.Print(err)
-			}
+			}*/
 		} else {
 			log.Printf("Dispatcher channel is nil")
 		}
@@ -169,11 +168,11 @@ func findActivity(lat1, lon1, lat2, lon2 float64, time int64) string {
 	distance := 6371000 * degToRad * math.Sqrt(math.Pow(math.Cos(lat1*degToRad)*(lon1-lon2), 2)+math.Pow(lat1-lat2, 2))
 	speed := distance / float64(time*1000)
 	log.Printf("Distance %v, time %v, speed %v", distance, time, speed)
-	if speed < 3 {
-		return "walking"
-	} else if speed < 10 {
+	if speed > 10 {
+		return "driving"
+	} else if speed > 3 {
 		return "running"
 	}
-	return "driving"
+	return "walking"
 
 }
