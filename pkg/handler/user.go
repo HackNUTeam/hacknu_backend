@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -116,6 +117,20 @@ func (h *Handler) GetHistory(c *gin.Context) {
 		log.Printf("invalid input, some fields are incorrect: %s", err.Error())
 		c.AbortWithStatusJSON(404, createResponse(nil, "INVALID_INPUT"))
 		return
+	}
+	keys := c.Request.URL.Query()["user_id"]
+	id, err := strconv.Atoi(keys[0])
+	if err != nil {
+		defaultErrorHandler(c, err)
+		return
+	}
+	log.Print(id)
+	keyTime := c.Request.URL.Query()["timestamp"]
+	req.UserID = int64(id)
+	req.Timestamp, err = strconv.ParseInt(keyTime[0], 10, 64)
+	log.Print(req.Timestamp)
+	if err != nil {
+		panic(err)
 	}
 	res, err := h.services.User.GetHistory(req)
 	if err != nil {
