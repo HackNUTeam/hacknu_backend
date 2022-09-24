@@ -1,6 +1,10 @@
 package service
 
-import "hacknu/pkg/repository"
+import (
+	"hacknu/model"
+	"hacknu/pkg/repository"
+	"time"
+)
 
 type UserService struct {
 	repo repository.User
@@ -8,4 +12,9 @@ type UserService struct {
 
 func NewUserService(repo repository.User) *UserService {
 	return &UserService{repo: repo}
+}
+
+func (u *UserService) CreateReading(location *model.LocationData) error {
+	location.Timestamp = time.Now().Unix()
+	return u.repo.CreateReading(location)
 }
