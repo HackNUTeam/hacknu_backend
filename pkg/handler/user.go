@@ -51,7 +51,7 @@ func (h *Handler) serveHome(c *gin.Context) {
 
 func (h *Handler) ServeWs(c *gin.Context) {
 	//h.ping = make(chan []byte, 256)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
 	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
@@ -81,7 +81,7 @@ func (h *Handler) SendLocation(c *gin.Context) {
 	//h.pong = make(chan *model.PongStruct, 10)
 	pong := &model.PongStruct{}
 	h.pong <- pong
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
 	defer cancel()
 	var messageByte []byte
 	select {
