@@ -62,7 +62,7 @@ func (u *UserDB) CreateUser(name string) (int64, error) {
 
 	return id, nil
 }
-func (u *UserDB) GetHistoryLocation(user *model.GetLocationRequest) ([]*model.LocationData, error) {
+func (u *UserDB) GetHistoryLocation(name string, timestamp int64) ([]*model.LocationData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 	var stmt string
@@ -70,18 +70,27 @@ func (u *UserDB) GetHistoryLocation(user *model.GetLocationRequest) ([]*model.Lo
 	res := make([]*model.LocationData, 0, 1)
 	var row *sql.Rows
 	var err error
-	t := user.Timestamp
+	var id int64
 
-	if user.Timestamp == -1 {
+	stmt = `select id from users where name=$1;`
+	qrow := u.db.QueryRowContext(ctx, stmt, name)
+
+	err = qrow.Scan(&id)
+	if err != nil {
+		log.Println("Error while getting user with name ", name)
+		return nil, err
+	}
+	log.Println("user_id:", id)
+	if timestamp == -1 {
 		stmt = `select latitude, longitude, altitude, _created_at, floorLabel, h_accuracy, v_accuracy, activity from positions where user_id=$1;`
-		row, err = u.db.QueryContext(ctx, stmt, user.UserID)
+		row, err = u.db.QueryContext(ctx, stmt, id)
 		if err != nil {
 			return nil, err
 		}
 		log.Println("no timestamp")
 	} else {
 		stmt = `select latitude, longitude, altitude, _created_at, floorLabel, h_accuracy, v_accuracy, activity from positions where _created_at >= $1 AND user_id = $2`
-		row, err = u.db.QueryContext(ctx, stmt, t, user.UserID)
+		row, err = u.db.QueryContext(ctx, stmt, timestamp, id)
 		if err != nil {
 			return nil, err
 		}

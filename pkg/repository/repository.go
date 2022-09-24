@@ -9,7 +9,7 @@ import (
 
 type User interface {
 	CreateReading(location *model.LocationData) error
-	GetHistoryLocation(user *model.GetLocationRequest) ([]*model.LocationData, error)
+	GetHistoryLocation(name string, timestamp int64) ([]*model.LocationData, error)
 	CreateUser(name string) (int64, error)
 }
 

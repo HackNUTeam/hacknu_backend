@@ -16,8 +16,8 @@ type LocationData struct {
 }
 
 type GetLocationRequest struct {
-	Timestamp int64 `json:"timestamp" binding:"required"`
-	UserID    int64 `json:"user_id"`
+	Timestamp int64  `json:"timestamp" binding:"required"`
+	Name      string `json:"name"`
 }
 
 var (

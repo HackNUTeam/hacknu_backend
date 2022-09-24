@@ -28,5 +28,5 @@ func (u *UserService) CreateReading(location *model.LocationData) error {
 }
 
 func (u *UserService) GetHistory(user *model.GetLocationRequest) ([]*model.LocationData, error) {
-	return u.repo.GetHistoryLocation(user)
+	return u.repo.GetHistoryLocation(user.Name, user.Timestamp)
 }

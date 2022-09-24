@@ -112,16 +112,14 @@ func (h *Handler) GetHistory(c *gin.Context) {
 	req := &model.GetLocationRequest{
 		Timestamp: -1,
 	}
-	keys := c.Request.URL.Query()["user_id"]
-	id, err := strconv.Atoi(keys[0])
-	if err != nil {
-		defaultErrorHandler(c, err)
-		return
+	req.Name = c.Query("name")
+	var err error
+	log.Print(req.Name)
+	keyTime := c.Query("timestamp")
+	if keyTime != "" {
+		req.Timestamp, err = strconv.ParseInt(keyTime, 10, 64)
 	}
-	log.Print(id)
-	keyTime := c.Request.URL.Query()["timestamp"]
-	req.UserID = int64(id)
-	req.Timestamp, err = strconv.ParseInt(keyTime[0], 10, 64)
+
 	log.Print(req.Timestamp)
 	if err != nil {
 		panic(err)
