@@ -5,6 +5,7 @@ import (
 	"errors"
 	"hacknu/model"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -118,11 +119,12 @@ func (h *Handler) listenUser(client *model.Client) {
 			if err != nil {
 				log.Print(errors.New("could not unmarshall"))
 			}
-			/*if val, exists := h.clients[client]; !exists {
+			if val, exists := h.clients[client]; !exists {
 				h.clients[client] = location
 			} else {
-				location.Activity = findActivity(val.Latitude, val.Longitude, location.Latitude, location.Longitude)
-			}*/
+				location.Activity = findActivity(val.Latitude, val.Longitude, location.Latitude, location.Longitude, location.Timestamp-val.Timestamp)
+			}
+			log.Print(location.Activity)
 			h.dispatcherChan <- msg
 			err = h.services.User.CreateReading(&location)
 			if err != nil {
@@ -162,9 +164,16 @@ func createResponse(data interface{}, err string) gin.H {
 	}
 }
 
-/*
-func findActivity(lat1, lon1, lat2, lon2 float64) {
+func findActivity(lat1, lon1, lat2, lon2 float64, time int64) string {
 	var degToRad = math.Pi / 180
 	distance := 6371000 * degToRad * math.Sqrt(math.Pow(math.Cos(lat1*degToRad)*(lon1-lon2), 2)+math.Pow(lat1-lat2, 2))
+	speed := distance / float64(time*1000)
+	log.Printf("Distance %v, time %v, speed %v", distance, time, speed)
+	if speed < 3 {
+		return "walking"
+	} else if speed < 10 {
+		return "running"
+	}
+	return "driving"
 
-}*/
+}
