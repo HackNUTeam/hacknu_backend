@@ -117,7 +117,7 @@ func (h *Handler) listenUser(client *model.Client) {
 			var location model.LocationData
 			err := json.Unmarshal(msg, &location)
 			if err != nil {
-				log.Print(errors.New("could not unmarshall"))
+				log.Print(err)
 			}
 			if val, exists := h.clients[client]; !exists {
 				h.clients[client] = location
@@ -169,11 +169,11 @@ func findActivity(lat1, lon1, lat2, lon2 float64, time int64) string {
 	distance := 6371000 * degToRad * math.Sqrt(math.Pow(math.Cos(lat1*degToRad)*(lon1-lon2), 2)+math.Pow(lat1-lat2, 2))
 	speed := distance / float64(time*1000)
 	log.Printf("Distance %v, time %v, speed %v", distance, time, speed)
-	if speed < 3 {
-		return "walking"
-	} else if speed < 10 {
+	if speed > 10 {
+		return "driving"
+	} else if speed > 3 {
 		return "running"
 	}
-	return "driving"
+	return "walking"
 
 }
