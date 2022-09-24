@@ -25,7 +25,7 @@ func (u *UserDB) CreateReading(location *model.LocationData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	stmt := `insert into positions (latitude, longitude, altitude, floorLabel, h_accuracy, v_accuracy, activity, userID, _created_at)
+	stmt := `insert into positions (latitude, longitude, altitude, floorLabel, h_accuracy, v_accuracy, activity, user_id, _created_at)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	err := u.db.QueryRowContext(ctx, stmt,
