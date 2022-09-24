@@ -1,8 +1,13 @@
 package service
 
-import "hacknu/pkg/repository"
+import (
+	"hacknu/model"
+	"hacknu/pkg/repository"
+)
 
 type User interface {
+	CreateReading(location *model.LocationData) error
+	GetHistory(user *model.GetLocationRequest) ([]*model.LocationData, error)
 }
 type Service struct {
 	User

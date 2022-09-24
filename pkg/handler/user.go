@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 	"hacknu/model"
 	"log"
 	"net/http"
@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
+	"github.com/gin-gonic/gin/binding"
 )
 
 const (
@@ -49,111 +49,111 @@ func (h *Handler) serveHome(c *gin.Context) {
 	http.ServeFile(c.Writer, c.Request, os.Getenv("Data")+"home.html")
 }
 
-func (h *Handler) ServeWs(c *gin.Context) {
+func (h *Handler) HandleUser(c *gin.Context) {
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan *model.LocationData, 256)}
-	log.Print(client)
-	client.Hub.Register <- client
+	client := &model.Client{Conn: conn, Send: make(chan []byte, 256)}
 
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	//go h.WritePump(client)
-	go h.ReadPump(client)
+	h.listenUser(client)
+	log.Printf("Finished listening user %v", client)
 }
 
-func (h *Handler) ReadPump(c *model.Client) {
-	defer func() {
-		c.Hub.Unregister <- c
-		c.Conn.Close()
-	}()
-	c.Conn.SetReadLimit(maxMessageSize)
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+func (h *Handler) HandleDispatcher(c *gin.Context) {
+	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
+	log.Print(conn)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &model.Client{Conn: conn, Send: make(chan []byte, 256)}
+	h.dispatcherChan = make(chan []byte, 100)
+
+	h.listenDispatcherChan(client)
+}
+
+func (h *Handler) listenDispatcherChan(client *model.Client) {
+	errChan := make(chan error, 10)
+	go readDispChan(errChan, client)
 	for {
-		_, message, err := c.Conn.ReadMessage()
-		log.Print(message, err)
+
+		select {
+		case msg := <-h.dispatcherChan:
+			log.Printf("Received message for dispatcher %v", msg)
+			client.Conn.WriteMessage(1, msg)
+		case err := <-errChan:
+			log.Printf("Lost connection to dispatcher: %v", err)
+			h.dispatcherChan = nil
+			return
+		}
+	}
+}
+
+func readDispChan(errChan chan error, client *model.Client) {
+	for {
+		_, _, err := client.Conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
+			errChan <- err
+			log.Println("Error during message reading:", err)
 			break
 		}
-		var location model.LocationData
-		_ = json.Unmarshal(message, &location)
-		log.Print(location)
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		log.Print(message)
-		c.Hub.Broadcast <- &location
 	}
 }
 
-func (h *Handler) WritePump(c *model.Client) {
-	ticker := time.NewTicker(pingPeriod)
-	defer func() {
-		ticker.Stop()
-		c.Conn.Close()
-	}()
+func (h *Handler) listenUser(client *model.Client) {
 	for {
-		select {
-		case message, ok := <-c.Send:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if !ok {
-				// The hub closed the channel.
-				log.Print("Hub cloased channel")
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+		_, msg, err := client.Conn.ReadMessage()
+		if err != nil {
+			log.Printf("Error reading message from client %v", err)
+			return
+		}
+		log.Printf("Received message from client %v", msg)
+		if h.dispatcherChan != nil {
+			h.dispatcherChan <- msg
+			var location model.LocationData
+			err := json.Unmarshal(msg, &location)
+			if err != nil {
+				log.Print(errors.New("Could not unmarshall"))
 				return
 			}
-			log.Print(message)
-			w, err := c.Conn.NextWriter(websocket.TextMessage)
+			err = h.services.User.CreateReading(&location)
 			if err != nil {
 				log.Print(err)
 				return
 			}
-			send, err := json.Marshal(message)
-			if err != nil {
-				log.Print(err)
-				return
-			}
-			w.Write(send)
-
-			// Add queued chat messages to the current websocket message.
-			n := len(c.Send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				read := <-c.Send
-				newSend, err := json.Marshal(read)
-				if err != nil {
-					log.Print(err)
-					return
-				}
-				w.Write(newSend)
-			}
-
-			if err := w.Close(); err != nil {
-				return
-			}
-		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
+		} else {
+			log.Printf("Dispatcher channel is nil")
 		}
 	}
 }
 
-func (h *Handler) SendLocation(c *gin.Context) {
-	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
-	log.Print(conn)
-	if err != nil {
-		log.Println(err)
+func (h *Handler) GetHistory(c *gin.Context) {
+	req := &model.GetLocationRequest{
+		Timestamp: -1,
+	}
+	if err := c.ShouldBindWith(req, binding.JSON); err != nil {
+		log.Printf("invalid input, some fields are incorrect: %s", err.Error())
+		c.AbortWithStatusJSON(404, createResponse(nil, "INVALID_INPUT"))
 		return
 	}
-	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan *model.LocationData, 256)}
-	h.dispatcher = client
-	//h.pong = make(chan *model.PongStruct, 10)
+	res, err := h.services.User.GetHistory(req)
+	if err != nil {
+		log.Printf("get locations error: %v", err)
+		if errors.Is(err, model.ErrNoDataForSuchUser) {
+			c.AbortWithStatusJSON(500, createResponse(nil, model.ErrNoDataForSuchUser.Error()))
+			return
+		}
+		c.AbortWithStatusJSON(500, createResponse(nil, "INTERNAL_SERVER_ERROR"))
+		return
+	}
+	c.JSON(200, createResponse(res, ""))
+}
+func createResponse(data interface{}, err string) gin.H {
+	return gin.H{
+		"data":  data,
+		"error": err,
+	}
 }

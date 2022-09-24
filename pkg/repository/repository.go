@@ -1,10 +1,15 @@
 package repository
 
-import "database/sql"
+import (
+	"database/sql"
+	"hacknu/model"
+)
 
 //go:generate mockgen -source=repository.go -destination=mocks/mock.go
 
 type User interface {
+	CreateReading(location *model.LocationData) error
+	GetHistoryLocation(user *model.GetLocationRequest) ([]*model.LocationData, error)
 }
 
 type Repository struct {
