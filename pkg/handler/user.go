@@ -51,6 +51,7 @@ func (h *Handler) serveHome(c *gin.Context) {
 }
 
 func (h *Handler) ServeWs(c *gin.Context) {
+	h.ping = make(chan []byte, 256)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -70,6 +71,15 @@ func (h *Handler) ServeWs(c *gin.Context) {
 }
 
 func (h *Handler) SendLocation(c *gin.Context) {
+	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
+	log.Print(conn)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
+
+	h.pong = make(chan *model.PongStruct, 10)
 	pong := &model.PongStruct{}
 	h.pong <- pong
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
@@ -82,16 +92,8 @@ func (h *Handler) SendLocation(c *gin.Context) {
 	case messageByte = <-h.ping:
 		log.Println("pong received: starting to proccess messages")
 	}
-	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
-	log.Print(conn)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
 
 	go h.WritePump(client, messageByte)
-	close(h.ping)
 }
 
 func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
@@ -111,6 +113,7 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 			}
 			break
 		}
+		h.ping <- message
 		select {
 		case <-ctx.Done():
 			log.Println("ebu ernara")
@@ -118,7 +121,7 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 		case <-h.pong:
 			log.Println("pong received: dispetcher alive")
 		}
-		h.ping <- message
+
 		var location model.LocationData
 		_ = json.Unmarshal(message, &location)
 		log.Print(location)
