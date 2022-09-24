@@ -54,6 +54,7 @@ func (c *Client) ReadPump() {
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := c.Conn.ReadMessage()
+		log.Print(message, err)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
@@ -62,6 +63,7 @@ func (c *Client) ReadPump() {
 		}
 		var location LocationData
 		_ = json.Unmarshal(message, &location)
+		log.Print(location)
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		log.Print(message)
 		c.Hub.Broadcast <- &location
@@ -85,10 +87,11 @@ func (c *Client) WritePump() {
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
+				log.Print("Hub cloased channel")
 				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-
+			log.Print(message)
 			w, err := c.Conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				log.Print(err)
