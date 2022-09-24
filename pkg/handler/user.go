@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"hacknu/model"
@@ -122,11 +121,6 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 			log.Println("pong received: dispetcher alive")
 		}
 
-		var location model.LocationData
-		_ = json.Unmarshal(message, &location)
-		log.Print(location)
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		log.Print(message)
 		c.Hub.Broadcast <- message
 	}
 }
