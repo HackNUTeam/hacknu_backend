@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"hacknu/model"
 	"log"
@@ -113,7 +114,7 @@ func (h *Handler) listenUser(client *model.Client) {
 		}
 		log.Printf("Received message from client %v", msg)
 		if h.dispatcherChan != nil {
-			/*var location model.LocationData
+			var location model.LocationData
 			err := json.Unmarshal(msg, &location)
 			if err != nil {
 				log.Print(err)
@@ -123,12 +124,12 @@ func (h *Handler) listenUser(client *model.Client) {
 			} else {
 				location.Activity = findActivity(val.Latitude, val.Longitude, location.Latitude, location.Longitude, location.Timestamp-val.Timestamp)
 			}
-			log.Print(location.Activity)*/
+			log.Print(location.Activity)
 			h.dispatcherChan <- msg
-			/*err = h.services.User.CreateReading(&location)
+			err = h.services.User.CreateReading(&location)
 			if err != nil {
 				log.Print(err)
-			}*/
+			}
 		} else {
 			log.Printf("Dispatcher channel is nil")
 		}
