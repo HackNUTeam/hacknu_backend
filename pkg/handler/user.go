@@ -51,7 +51,7 @@ func (h *Handler) serveHome(c *gin.Context) {
 
 func (h *Handler) ServeWs(c *gin.Context) {
 	//h.ping = make(chan []byte, 256)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
@@ -70,6 +70,8 @@ func (h *Handler) ServeWs(c *gin.Context) {
 }
 
 func (h *Handler) SendLocation(c *gin.Context) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
 	if err != nil {
@@ -81,18 +83,10 @@ func (h *Handler) SendLocation(c *gin.Context) {
 	//h.pong = make(chan *model.PongStruct, 10)
 	pong := &model.PongStruct{}
 	h.pong <- pong
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
-	defer cancel()
-	var messageByte []byte
-	select {
-	case <-ctx.Done():
-		log.Println("pong didn't received, no clinet")
-		return
-	case messageByte = <-h.ping:
-		log.Println("pong received: starting to proccess messages")
-	}
 
-	go h.WritePump(client, messageByte)
+	messageByte := <-h.ping
+
+	go h.WritePump(ctx, client, messageByte)
 }
 
 func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
@@ -125,7 +119,7 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 	}
 }
 
-func (h *Handler) WritePump(c *model.Client, msg []byte) {
+func (h *Handler) WritePump(ctx context.Context, c *model.Client, msg []byte) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -170,12 +164,18 @@ func (h *Handler) WritePump(c *model.Client, msg []byte) {
 			if err := w.Close(); err != nil {
 				return
 			}
+			var bruh *model.PongStruct
+			h.pong <- bruh
 		case <-ticker.C:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Printf("BRUH %v", err)
 				return
 			}
+			var bruh *model.PongStruct
+			h.pong <- bruh
+		case <-ctx.Done():
+			return
 		}
 	}
 }
