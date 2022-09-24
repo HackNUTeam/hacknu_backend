@@ -60,7 +60,7 @@ func (u *UserDB) CreateUser(name string) (int64, error) {
 		return -1, err
 	}
 
-	return -1, nil
+	return id, nil
 }
 func (u *UserDB) GetHistoryLocation(user *model.GetLocationRequest) ([]*model.LocationData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
