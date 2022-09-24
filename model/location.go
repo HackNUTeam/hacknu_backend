@@ -10,4 +10,5 @@ type LocationData struct {
 	HorizontalAccuracy int     `json:"horizontalAccuracy"`
 	VerticalAccuracy   int     `json:"verticalAccuracy"`
 	Activity           string  `json:"activity"`
+	UserID             int64   `json:"userID"`
 }

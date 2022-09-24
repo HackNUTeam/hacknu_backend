@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"errors"
 	"hacknu/model"
 	"log"
 	"net/http"
@@ -110,6 +112,17 @@ func (h *Handler) listenUser(client *model.Client) {
 		log.Printf("Received message from client %v", msg)
 		if h.dispatcherChan != nil {
 			h.dispatcherChan <- msg
+			var location model.LocationData
+			err := json.Unmarshal(msg, &location)
+			if err != nil {
+				log.Print(errors.New("Could not unmarshall"))
+				return
+			}
+			err = h.services.User.CreateReading(&location)
+			if err != nil {
+				log.Print(err)
+				return
+			}
 		} else {
 			log.Printf("Dispatcher channel is nil")
 		}
