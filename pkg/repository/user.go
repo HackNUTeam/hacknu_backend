@@ -47,7 +47,21 @@ func (u *UserDB) CreateReading(location *model.LocationData) error {
 
 	return nil
 }
+func (u *UserDB) CreateUser(name string) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	var id int64
+	defer cancel()
+	stmt := `insert into users (name) values $1 RETURNING id`
 
+	row := u.db.QueryRowContext(ctx, stmt, name)
+
+	err := row.Scan(&id)
+	if err != nil {
+		return -1, err
+	}
+
+	return -1, nil
+}
 func (u *UserDB) GetHistoryLocation(user *model.GetLocationRequest) ([]*model.LocationData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()

@@ -10,6 +10,7 @@ import (
 type User interface {
 	CreateReading(location *model.LocationData) error
 	GetHistoryLocation(user *model.GetLocationRequest) ([]*model.LocationData, error)
+	CreateUser(name string) (int64, error)
 }
 
 type Repository struct {

@@ -18,6 +18,12 @@ func NewUserService(repo repository.User) *UserService {
 func (u *UserService) CreateReading(location *model.LocationData) error {
 	location.Timestamp = time.Now().Unix()
 	log.Print(location)
+	id, err := u.repo.CreateUser(location.Identifier)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	location.UserID = id
 	return u.repo.CreateReading(location)
 }
 

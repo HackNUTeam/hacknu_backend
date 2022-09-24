@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
   id bigserial,
   name text NOT NULL ,
-  _created_at bigint ,
+  _created_at timestamp DEFAULT now() NOT NULL ,
   PRIMARY KEY(id)
 );
 CREATE TABLE IF NOT EXISTS positions (
