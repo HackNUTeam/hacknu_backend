@@ -4,6 +4,7 @@ import (
 	"hacknu/model"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +23,7 @@ func (h *Handler) serveHome(c *gin.Context) {
 
 	log.Println(c.Request.URL.Path == "/")
 
-	http.ServeFile(c.Writer, c.Request, "/home/dulat/Desktop/hacknu_backend/data/home.html")
+	http.ServeFile(c.Writer, c.Request, os.Getenv("Data")+"home.html")
 }
 
 func (h *Handler) ServeWs(c *gin.Context) {
