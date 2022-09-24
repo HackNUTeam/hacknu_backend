@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"hacknu/model"
 	"log"
@@ -49,33 +50,20 @@ func (h *Handler) serveHome(c *gin.Context) {
 }
 
 func (h *Handler) ServeWs(c *gin.Context) {
-	//h.ping = make(chan []byte, 256)
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
+	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan *model.LocationData, 256)}
 	log.Print(client)
 	client.Hub.Register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
-	go h.WritePump(client)
+	//go h.WritePump(client)
 	go h.ReadPump(client)
-}
-
-func (h *Handler) SendLocation(c *gin.Context) {
-	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
-	log.Print(conn)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
-	h.dispatcher = client
-	//h.pong = make(chan *model.PongStruct, 10)
 }
 
 func (h *Handler) ReadPump(c *model.Client) {
@@ -95,7 +83,12 @@ func (h *Handler) ReadPump(c *model.Client) {
 			}
 			break
 		}
-		h.WritePump(h.dispatcher)
+		var location model.LocationData
+		_ = json.Unmarshal(message, &location)
+		log.Print(location)
+		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		log.Print(message)
+		c.Hub.Broadcast <- &location
 	}
 }
 
@@ -111,8 +104,8 @@ func (h *Handler) WritePump(c *model.Client) {
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
-				log.Print("Hub closed by server")
-				c.Conn.WriteMessage(websocket.CloseMessage, message)
+				log.Print("Hub cloased channel")
+				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 			log.Print(message)
@@ -144,6 +137,23 @@ func (h *Handler) WritePump(c *model.Client) {
 			if err := w.Close(); err != nil {
 				return
 			}
+		case <-ticker.C:
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
+}
+
+func (h *Handler) SendLocation(c *gin.Context) {
+	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
+	log.Print(conn)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan *model.LocationData, 256)}
+	h.dispatcher = client
+	//h.pong = make(chan *model.PongStruct, 10)
 }

@@ -12,7 +12,7 @@ type Client struct {
 	Conn *websocket.Conn
 
 	// Buffered channel of outbound messages.
-	Send chan []byte
+	Send chan *LocationData
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -32,7 +32,7 @@ type Hub struct {
 	Clients map[*Client]bool
 
 	// Inbound messages from the clients.
-	Broadcast chan []byte
+	Broadcast chan *LocationData
 
 	// Register requests from the clients.
 	Register chan *Client
@@ -43,7 +43,7 @@ type Hub struct {
 
 func NewHub() *Hub {
 	return &Hub{
-		Broadcast:  make(chan []byte),
+		Broadcast:  make(chan *LocationData),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),

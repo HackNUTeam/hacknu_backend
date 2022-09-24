@@ -24,6 +24,5 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	router.GET("/", h.serveHome)
 	router.GET("/ws", h.ServeWs)
 	router.GET("/ws-disp", h.SendLocation)
-	//router.POST("/sendLocation", h.sendLocation)
 	return router
 }
