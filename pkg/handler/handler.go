@@ -22,5 +22,6 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	router.GET("/", h.serveHome)
 	router.GET("/user", h.HandleUser)
 	router.GET("/dispatcher", h.HandleDispatcher)
+	router.GET("/get-history", h.GetHistory)
 	return router
 }

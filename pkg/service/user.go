@@ -18,3 +18,7 @@ func (u *UserService) CreateReading(location *model.LocationData) error {
 	location.Timestamp = time.Now().Unix()
 	return u.repo.CreateReading(location)
 }
+
+func (u *UserService) GetHistory(user *model.GetLocationRequest) (*model.LocationData, error) {
+	return u.repo.GetHistoryLocation(user)
+}
