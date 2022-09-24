@@ -5,32 +5,11 @@ import (
 	"errors"
 	"hacknu/model"
 	"log"
-	"math"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-)
-
-const (
-	// Time allowed to write a message to the peer.
-	writeWait = 10 * time.Second
-
-	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
-
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
-	maxMessageSize = 512
-)
-
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
 )
 
 func (h *Handler) serveHome(c *gin.Context) {
@@ -64,7 +43,6 @@ func (h *Handler) HandleUser(c *gin.Context) {
 }
 
 func (h *Handler) HandleDispatcher(c *gin.Context) {
-	h.clients = make(map[*model.Client]model.LocationData, 0)
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
 	if err != nil {
@@ -119,12 +97,6 @@ func (h *Handler) listenUser(client *model.Client) {
 			if err != nil {
 				log.Print(err)
 			}
-			if val, exists := h.clients[client]; !exists {
-				h.clients[client] = location
-			} else {
-				location.Activity = findActivity(val.Latitude, val.Longitude, location.Latitude, location.Longitude, location.Timestamp-val.Timestamp)
-			}
-			log.Print(location.Activity)
 			h.dispatcherChan <- msg
 			err = h.services.User.CreateReading(&location)
 			if err != nil {
@@ -162,18 +134,4 @@ func createResponse(data interface{}, err string) gin.H {
 		"data":  data,
 		"error": err,
 	}
-}
-
-func findActivity(lat1, lon1, lat2, lon2 float64, time int64) string {
-	var degToRad = math.Pi / 180
-	distance := 6371000 * degToRad * math.Sqrt(math.Pow(math.Cos(lat1*degToRad)*(lon1-lon2), 2)+math.Pow(lat1-lat2, 2))
-	speed := distance / float64(time*1000)
-	log.Printf("Distance %v, time %v, speed %v", distance, time, speed)
-	if speed > 10 {
-		return "driving"
-	} else if speed > 3 {
-		return "running"
-	}
-	return "walking"
-
 }
