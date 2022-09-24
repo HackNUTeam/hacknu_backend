@@ -51,7 +51,7 @@ func (u *UserDB) CreateUser(name string) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	var id int64
 	defer cancel()
-	stmt := `insert into users (name) values ($1) RETURNING id`
+	stmt := `insert into users (name) values ($1) ON CONFLICT (name) DO NOTHING RETURNING id;`
 
 	row := u.db.QueryRowContext(ctx, stmt, name)
 
