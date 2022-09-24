@@ -124,7 +124,7 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 		log.Print(location)
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		log.Print(message)
-		c.Hub.Broadcast <- &location
+		c.Hub.Broadcast <- message
 	}
 }
 
