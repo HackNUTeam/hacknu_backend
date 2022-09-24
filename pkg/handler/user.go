@@ -51,7 +51,7 @@ func (h *Handler) serveHome(c *gin.Context) {
 }
 
 func (h *Handler) ServeWs(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
@@ -72,7 +72,7 @@ func (h *Handler) ServeWs(c *gin.Context) {
 func (h *Handler) SendLocation(c *gin.Context) {
 	pong := &model.PongStruct{}
 	h.pong <- pong
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	var messageByte []byte
 	select {
@@ -113,6 +113,7 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 		}
 		select {
 		case <-ctx.Done():
+			log.Println("ebu ernara")
 			return
 		case <-h.pong:
 			log.Println("pong received: dispetcher alive")
