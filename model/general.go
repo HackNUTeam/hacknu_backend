@@ -10,6 +10,7 @@ type DefaultPage struct {
 	CurrentPage int         `json:"currentPage" bson:"currentPage"`
 	Data        interface{} `json:"data" bson:"data"`
 }
+type PongStruct struct{}
 
 // DefaultResponse used in every response
 type DefaultResponse struct {
