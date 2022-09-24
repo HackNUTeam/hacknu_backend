@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	maps "hacknu"
-	"hacknu/model"
 	"net/http"
 	"os"
 
@@ -40,7 +39,6 @@ func main() {
 
 	repos := repository.NewRepository(db)
 	service := service.NewService(repos)
-	hub := model.NewHub()
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -48,12 +46,11 @@ func main() {
 			return true
 		},
 	}
-	handlers := handler.NewHandler(service, hub, upgrader)
+	handlers := handler.NewHandler(service, upgrader, nil)
 	staticHandler := handler.NewStaticHandler(service)
 
 	srv := new(maps.Server)
 	staticSrv := new(maps.Server)
-	go hub.Run()
 	go func() {
 		if err := srv.Run(os.Getenv("APIPortHTTP"), handlers.InitRoutes()); err != nil {
 			logrus.Fatalf("error occured while running http server: %s", err.Error())

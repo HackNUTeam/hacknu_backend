@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"hacknu/model"
 	"hacknu/pkg/service"
 
 	"github.com/gin-gonic/gin"
@@ -9,21 +8,19 @@ import (
 )
 
 type Handler struct {
-	services   *service.Service
-	hub        *model.Hub
-	upgrader   *websocket.Upgrader
-	dispatcher *model.Client
+	services       *service.Service
+	upgrader       *websocket.Upgrader
+	dispatcherChan chan []byte
 }
 
-func NewHandler(services *service.Service, hub *model.Hub, upgrader websocket.Upgrader) *Handler {
-	return &Handler{services: services, hub: hub, upgrader: &upgrader}
+func NewHandler(services *service.Service, upgrader websocket.Upgrader, dispChan chan []byte) *Handler {
+	return &Handler{services: services, upgrader: &upgrader, dispatcherChan: dispChan}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 	router.GET("/", h.serveHome)
-	router.GET("/ws", h.ServeWs)
-	router.GET("/ws-disp", h.SendLocation)
-	//router.POST("/sendLocation", h.sendLocation)
+	router.GET("/user", h.HandleUser)
+	router.GET("/dispatcher", h.HandleDispatcher)
 	return router
 }
