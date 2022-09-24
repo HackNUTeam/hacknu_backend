@@ -27,7 +27,7 @@ func (u *UserDB) CreateReading(location *model.LocationData) error {
 
 	stmt := `insert into positions (latitude, longitude, altitude, floorLabel, h_accuracy, v_accuracy, activity, user_id, _created_at)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-
+	log.Print(location.UserID)
 	err := u.db.QueryRowContext(ctx, stmt,
 		location.Latitude,
 		location.Longitude,
