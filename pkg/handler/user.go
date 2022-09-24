@@ -51,7 +51,7 @@ func (h *Handler) serveHome(c *gin.Context) {
 
 func (h *Handler) ServeWs(c *gin.Context) {
 	//h.ping = make(chan []byte, 256)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
@@ -145,12 +145,6 @@ func (h *Handler) WritePump(c *model.Client, msg []byte) {
 			}
 
 			if err := w.Close(); err != nil {
-				return
-			}
-		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Printf("BRUH %v", err)
 				return
 			}
 		}
