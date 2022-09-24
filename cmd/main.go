@@ -4,6 +4,7 @@ import (
 	"errors"
 	maps "hacknu"
 	"hacknu/model"
+	"net/http"
 	"os"
 
 	"hacknu/pkg/handler"
@@ -43,6 +44,9 @@ func main() {
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
 	}
 	handlers := handler.NewHandler(service, hub, upgrader)
 	staticHandler := handler.NewStaticHandler(service)
