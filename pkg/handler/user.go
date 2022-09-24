@@ -51,7 +51,7 @@ func (h *Handler) serveHome(c *gin.Context) {
 }
 
 func (h *Handler) ServeWs(c *gin.Context) {
-	h.ping = make(chan []byte, 256)
+	//h.ping = make(chan []byte, 256)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -79,7 +79,7 @@ func (h *Handler) SendLocation(c *gin.Context) {
 	}
 	client := &model.Client{Hub: h.hub, Conn: conn, Send: make(chan []byte, 256)}
 
-	h.pong = make(chan *model.PongStruct, 10)
+	//h.pong = make(chan *model.PongStruct, 10)
 	pong := &model.PongStruct{}
 	h.pong <- pong
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)

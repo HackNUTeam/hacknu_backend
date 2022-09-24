@@ -17,7 +17,7 @@ type Handler struct {
 }
 
 func NewHandler(services *service.Service, hub *model.Hub, upgrader websocket.Upgrader) *Handler {
-	return &Handler{services: services, hub: hub, upgrader: &upgrader, ping: make(chan []byte, 1), pong: make(chan *model.PongStruct, 1)}
+	return &Handler{services: services, hub: hub, upgrader: &upgrader, ping: make(chan []byte, 256), pong: make(chan *model.PongStruct, 10)}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {
