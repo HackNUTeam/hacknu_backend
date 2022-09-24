@@ -3,6 +3,7 @@ package service
 import (
 	"hacknu/model"
 	"hacknu/pkg/repository"
+	"log"
 	"time"
 )
 
@@ -16,6 +17,7 @@ func NewUserService(repo repository.User) *UserService {
 
 func (u *UserService) CreateReading(location *model.LocationData) error {
 	location.Timestamp = time.Now().Unix()
+	log.Print(location)
 	return u.repo.CreateReading(location)
 }
 

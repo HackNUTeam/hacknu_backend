@@ -39,8 +39,9 @@ func (u *UserDB) CreateReading(location *model.LocationData) error {
 		location.UserID,
 		location.Timestamp,
 	)
+	log.Print(err)
 
-	if err.Err() != nil {
+	if err != nil {
 		return err.Err()
 	}
 

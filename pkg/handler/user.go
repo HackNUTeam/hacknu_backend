@@ -71,7 +71,7 @@ func (h *Handler) HandleDispatcher(c *gin.Context) {
 		return
 	}
 	client := &model.Client{Conn: conn, Send: make(chan []byte, 256)}
-	h.dispatcherChan = make(chan []byte, 100)
+	h.dispatcherChan = make(chan []byte, 1000)
 
 	h.listenDispatcherChan(client)
 }
@@ -124,11 +124,10 @@ func (h *Handler) listenUser(client *model.Client) {
 				location.Activity = findActivity(val.Latitude, val.Longitude, location.Latitude, location.Longitude)
 			}*/
 			h.dispatcherChan <- msg
-			/*
-				err = h.services.User.CreateReading(&location)
-				if err != nil {
-					log.Print(err)
-				}*/
+			err = h.services.User.CreateReading(&location)
+			if err != nil {
+				log.Print(err)
+			}
 		} else {
 			log.Printf("Dispatcher channel is nil")
 		}
