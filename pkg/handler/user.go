@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"hacknu/model"
 	"log"
@@ -51,8 +50,6 @@ func (h *Handler) serveHome(c *gin.Context) {
 
 func (h *Handler) ServeWs(c *gin.Context) {
 	//h.ping = make(chan []byte, 256)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
 	if err != nil {
@@ -65,8 +62,8 @@ func (h *Handler) ServeWs(c *gin.Context) {
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
-	//go client.WritePump()
-	go h.ReadPump(ctx, client)
+	go h.WritePump(client)
+	go h.ReadPump(client)
 }
 
 func (h *Handler) SendLocation(c *gin.Context) {
@@ -81,7 +78,7 @@ func (h *Handler) SendLocation(c *gin.Context) {
 	//h.pong = make(chan *model.PongStruct, 10)
 }
 
-func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
+func (h *Handler) ReadPump(c *model.Client) {
 	defer func() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
@@ -98,11 +95,11 @@ func (h *Handler) ReadPump(ctx context.Context, c *model.Client) {
 			}
 			break
 		}
-		h.WritePump(h.dispatcher, message)
+		h.WritePump(h.dispatcher)
 	}
 }
 
-func (h *Handler) WritePump(c *model.Client, msg []byte) {
+func (h *Handler) WritePump(c *model.Client) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -115,7 +112,7 @@ func (h *Handler) WritePump(c *model.Client, msg []byte) {
 			if !ok {
 				// The hub closed the channel.
 				log.Print("Hub closed by server")
-				c.Conn.WriteMessage(websocket.CloseMessage, msg)
+				c.Conn.WriteMessage(websocket.CloseMessage, message)
 				return
 			}
 			log.Print(message)
