@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"hacknu/model"
 	"hacknu/pkg/service"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,7 @@ import (
 type Handler struct {
 	services       *service.Service
 	upgrader       *websocket.Upgrader
+	clients        map[*model.Client]model.LocationData
 	dispatcherChan chan []byte
 }
 

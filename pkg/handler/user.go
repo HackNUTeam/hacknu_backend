@@ -63,6 +63,7 @@ func (h *Handler) HandleUser(c *gin.Context) {
 }
 
 func (h *Handler) HandleDispatcher(c *gin.Context) {
+	h.clients = make(map[*model.Client]model.LocationData, 0)
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	log.Print(conn)
 	if err != nil {
@@ -112,18 +113,22 @@ func (h *Handler) listenUser(client *model.Client) {
 		}
 		log.Printf("Received message from client %v", msg)
 		if h.dispatcherChan != nil {
-			h.dispatcherChan <- msg
 			var location model.LocationData
 			err := json.Unmarshal(msg, &location)
 			if err != nil {
-				log.Print(errors.New("Could not unmarshall"))
-				return
+				log.Print(errors.New("could not unmarshall"))
 			}
-			err = h.services.User.CreateReading(&location)
-			if err != nil {
-				log.Print(err)
-				return
-			}
+			/*if val, exists := h.clients[client]; !exists {
+				h.clients[client] = location
+			} else {
+				location.Activity = findActivity(val.Latitude, val.Longitude, location.Latitude, location.Longitude)
+			}*/
+			h.dispatcherChan <- msg
+			/*
+				err = h.services.User.CreateReading(&location)
+				if err != nil {
+					log.Print(err)
+				}*/
 		} else {
 			log.Printf("Dispatcher channel is nil")
 		}
@@ -157,3 +162,10 @@ func createResponse(data interface{}, err string) gin.H {
 		"error": err,
 	}
 }
+
+/*
+func findActivity(lat1, lon1, lat2, lon2 float64) {
+	var degToRad = math.Pi / 180
+	distance := 6371000 * degToRad * math.Sqrt(math.Pow(math.Cos(lat1*degToRad)*(lon1-lon2), 2)+math.Pow(lat1-lat2, 2))
+
+}*/
