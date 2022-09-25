@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
   id bigserial,
-  name text NOT NULL ,
+  name text UNIQUE NOT NULL ,
   _created_at timestamp DEFAULT now() NOT NULL ,
   PRIMARY KEY(id)
 );
