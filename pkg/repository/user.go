@@ -51,18 +51,17 @@ func (u *UserDB) CreateUser(name string) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	var id int64
 	defer cancel()
-	stmt := `insert into users (name) values ($1) ON CONFLICT (name) DO NOTHING RETURNING id`
+	stmt := `insert into users (name) values ($1) ON CONFLICT (name) DO NOTHING`
 
 	row := u.db.QueryRowContext(ctx, stmt, name)
-
-	err := row.Scan(&id)
-	if err != nil {
-		return -1, err
+	if row.Err() != nil {
+		return -1, row.Err()
 	}
 	stmt = `select id from users where name=$1;`
 	qrow := u.db.QueryRowContext(ctx, stmt, name)
 
-	err = qrow.Scan(&id)
+	err := qrow.Scan(&id)
+	log.Printf("User with id %d and name %s received", id, name)
 	if err != nil {
 		log.Println("Error while getting user with name ", name)
 		return -1, err
